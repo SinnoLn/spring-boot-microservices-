@@ -1,0 +1,8 @@
+### Hello World String Response
+GET http://localhost:8080/hello-world
+
+### Hello World Bean Response
+GET http://localhost:8080/hello-world-bean
+
+### Hello World Path Variable
+GET http://localhost:8080/hello-world/path-variable/Jiny
