@@ -2,4 +2,4 @@
 GET http://localhost:8080/users
 
 ### Get specific user
-GET http://localhost:8080/users/4
+GET http://localhost:8080/users/101
