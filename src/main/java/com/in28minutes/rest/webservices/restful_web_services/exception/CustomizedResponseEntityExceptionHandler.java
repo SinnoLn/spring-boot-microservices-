@@ -43,10 +43,17 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
             HttpStatusCode status,
             WebRequest request
     ) {
-        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), ex.getMessage(), request.getDescription(false));
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                "Total Errors:"+ ex.getErrorCount()+" First Error:"+ex.getFieldError().getDefaultMessage(),
+                request.getDescription(false)
+        );
         return new ResponseEntity(errorDetails, HttpStatus.BAD_REQUEST);
     }
 }
 
 //RestApi 에서 소비자가 세부사항을 아는 순간은 응답과 응답상태를 통해서임
 //올바른 응답과 응답상태는 Rest API 에서 매우매우 중요함
+//상세하고 구체적으로 알려줘야함
+//모든 세부사항들을 이렇게 문구로 적어줄 수 있음
+//늘 소비자의 관점에서 생각하는걸 잊지 말자!
