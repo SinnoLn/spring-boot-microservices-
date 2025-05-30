@@ -2,4 +2,26 @@
 GET http://localhost:8080/users
 
 ### Get specific user
-GET http://localhost:8080/users/101
+GET http://localhost:8080/users/2
+
+### Delete specific user
+DELETE http://localhost:8080/users/1
+
+### Add specific user
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "name": "Jiny",
+  "birthDate": "2000-06-09"
+}
+
+### Error Add specific user
+### 유효성 검사 추가 필요 @Valid
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "name": "",
+  "birthDate": "20123-06-09"
+}
