@@ -25,3 +25,8 @@ Content-Type: application/json
   "name": "",
   "birthDate": "2034-06-09"
 }
+
+
+### xml type return
+GET http://localhost:8080/users
+Accept: application/xml
