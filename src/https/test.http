@@ -6,3 +6,11 @@ GET http://localhost:8080/hello-world-bean
 
 ### Hello World Path Variable
 GET http://localhost:8080/hello-world/path-variable/Jiny
+
+### Hello World Internationalized (Default - English)
+GET http://localhost:8080/hello-world-internationalized
+
+### Hello World Internationalized (Non-English)
+//En, De, Fr, Ko, Nl
+GET http://localhost:8080/hello-world-internationalized
+Accept-Language: nl
