@@ -213,8 +213,9 @@ public String greet(Locale locale) {
 
 ---
 
-#### Rest API를 만들고 100명의 손님을 끌었다.
-하지만 원래 만들던 api에 변화를 줘야한다.
+## 7. API 버전 관리
+> Rest API를 만들고 100명의 손님을 끌었다.  
+> 하지만 원래 만들던 api에 변화를 줘야한다.
 - 풀로 받던 이름을 성과 이름으로 나누기
 #### 해결방법
 ##### API 버전 관리 
@@ -272,3 +273,14 @@ public String greet(Locale locale) {
 
 > 버전 관리 방식은 일관성 있게 선택해야 하며, API 사용자(클라이언트)의 특성과 테스트 환경도 함께 고려해야 함.   
 > 즉 완벽한 방법이란 없다!!
+---
+## 8. HATEOAS와 API 문서화
+- HATEOAS(Hypermedia as the Engine of Application State)는 REST API의 핵심 원칙 중 하나로, 클라이언트가 API를 탐색할 수 있도록 **링크를 제공**하는 방식.
+
+#### 어떻게 소비자에게 링크를 제공할까?
+- HATEOAS
+
+1. 응답방식과 구현을 커스텀 한다
+   - 유지하기 어려움
+2. 스탠다드 라이브러리를 사용한다
+   - Spring HATEOAS 라이브러리 사용
