@@ -1,0 +1,27 @@
+### Versioning Example
+GET http://localhost:8080/v1/person
+
+### Versioning Example
+GET http://localhost:8080/v2/person
+
+### Versioning Example
+GET http://localhost:8080/person?version=1
+
+### Versioning Example
+GET http://localhost:8080/person?version=2
+
+### Versioning Example
+GET http://localhost:8080/person/header
+X-API-Version: 1
+
+### Versioning Example
+GET http://localhost:8080/person/header
+X-API-Version: 2
+
+### Versioning Example
+GET http://localhost:8080/person/accept
+Accept: application/vnd.company.app-v1+json
+
+### Versioning Example
+GET http://localhost:8080/person/accept
+Accept: application/vnd.company.app-v2+json
