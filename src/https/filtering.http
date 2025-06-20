@@ -1,0 +1,5 @@
+### HTTP request to test the filtering functionality of the API
+GET http://localhost:8080/filtering
+
+### HTTP request to test the filtering functionality of the API with specific fields
+GET http://localhost:8080/filtering-list

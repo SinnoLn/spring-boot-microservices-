@@ -284,3 +284,141 @@ public String greet(Locale locale) {
    - 유지하기 어려움
 2. 스탠다드 라이브러리를 사용한다
    - Spring HATEOAS 라이브러리 사용
+
+---
+
+# 9. Rest API Responses 커스터마이징 – **정적 필터링 vs 동적 필터링**
+
+스프링 부트에서는 **Jackson** 직렬화 모듈이 기본으로 탑재되어 있어, 객체를 JSON으로 변환할 때 보낼 필드(속성)를 자유롭게 조절할 수 있습니다.  
+필드 선택 방식은 크게 **정적 필터링(static filtering)** 과 **동적 필터링(dynamic filtering)** 두 가지로 나뉩니다.
+
+| 구분 | 적용 시점 | 대표 애너테이션 / API | 특징 | 주요 사용처 |
+|------|-----------|-----------------------|-------|------------|
+| **정적 필터링** | **컴파일 시점**<br>(클래스 정의 단계) | `@JsonIgnore`<br>`@JsonIgnoreProperties`<br>`@JsonInclude` | ⬥ 항상 동일한 규칙 적용<br>⬥ 간단·빠름 | ① 민감정보 상시 마스킹<br>② 요청마다 규칙이 바뀌지 않는 필드 |
+| **동적 필터링** | **런타임 시점**<br>(컨트롤러·서비스 계층) | `@JsonFilter` + `MappingJacksonValue`<br>`@JsonView` | ⬥ 요청별로 노출 필드 가변<br>⬥ 로직은 조금 복잡 | ① 한 엔드포인트에서 여러 뷰 제공<br>② 모바일/웹 등 클라이언트 맞춤 응답 |
+
+---
+
+## 9‑1. 정적 필터링 (Static Filtering)
+
+> **“항상 같은 필드를 감출 때는 클래스에 직접 ‘라벨’을 붙여라.”**
+
+### ① `@JsonIgnore` ‑ 필드 단위로 숨기기
+```java
+public class UserDto {
+    private Long id;
+    private String username;
+
+    @JsonIgnore          // 항상 제외
+    private String password;
+}
+```
+- **장점**: 선언 한 줄이면 끝 → **성능 영향 無**, 유지보수 단순
+- **단점**: 모든 엔드포인트에서 **항상** 숨겨짐. 특정 요청에서만 보여주고 싶어도 불가.
+
+### ② `@JsonIgnoreProperties` ‑ 여러 필드 한꺼번에
+```java
+@JsonIgnoreProperties({"password", "ssn"})
+public class UserDto { … }
+```
+
+### ③ `@JsonInclude` ‑ 조건부 직렬화
+```java
+@JsonInclude(JsonInclude.Include.NON_NULL) // null 값은 제외
+public class CommentResponse { … }
+```
+- null·빈 컬렉션·기본값만 제외 등 세밀한 옵션 제공.
+
+---
+
+## 9‑2. 동적 필터링 (Dynamic Filtering)
+
+> **“같은 객체라도 호출 컨텍스트마다 다른 ‘가면’을 씌워라.”**
+
+### ① `@JsonFilter` + `MappingJacksonValue`
+
+1. **도메인/DTO에 이름 없는 필터를 선언**
+   ```java
+   @JsonFilter("UserDynamicFilter")
+   public class UserDto { … }
+   ```
+
+2. **컨트롤러에서 노출할 필드 결정**
+   ```java
+   @GetMapping("/users/{id}")
+   public MappingJacksonValue getUser(@PathVariable Long id) {
+       UserDto user = userService.find(id);
+
+       // ① 보여줄 필드만 남기거나
+       SimpleBeanPropertyFilter filter =
+            SimpleBeanPropertyFilter.filterOutAllExcept("id", "username", "email");
+
+       // ② 특정 필드만 제외할 수도 있음
+       // SimpleBeanPropertyFilter.serializeAllExcept("password")
+
+       FilterProvider filters = new SimpleFilterProvider()
+               .addFilter("UserDynamicFilter", filter);
+
+       MappingJacksonValue wrapper = new MappingJacksonValue(user);
+       wrapper.setFilters(filters);
+       return wrapper;
+   }
+   ```
+
+### ② `@JsonView` ‑ 뷰 계층화 방식
+```java
+public class Views {
+    public static class Public {}
+    public static class Internal extends Public {}
+}
+
+public class UserDto {
+    @JsonView(Views.Public.class)
+    private Long id;
+
+    @JsonView(Views.Public.class)
+    private String username;
+
+    @JsonView(Views.Internal.class)
+    private String ssn;
+}
+
+@GetMapping("/users/{id}")
+@JsonView(Views.Public.class)     // 공개 뷰
+public UserDto getPublic(@PathVariable Long id){ … }
+
+@GetMapping("/internal/users/{id}")
+@JsonView(Views.Internal.class)   // 내부 뷰
+public UserDto getInternal(@PathVariable Long id){ … }
+```
+- **장점**: 필드 → 뷰 → 컨트롤러 간 역할이 분리되어 가독성 ↑
+- **단점**: 뷰 클래스를 계속 관리해야 하며, 세밀한 조건 조합에는 `MappingJacksonValue`가 더 유연합니다.
+
+---
+
+## 9‑3. 언제 어떤 방식을 택할까?
+
+| 선정 기준 | 추천 방식 | 이유 |
+|-----------|----------|------|
+| **항상 숨겨야 하는 민감 정보** (비밀번호, 내부 ID) | 정적(`@JsonIgnore`) | 실수 방지·성능 좋음 |
+| **엔드포인트마다 다른 응답 스펙** (모바일 전용, 관리자용) | 동적 필터링 | 요청별 필드 선택 가능 |
+| **동일 리소스를 뷰 관점으로 분리** (Public vs Internal) | `@JsonView` | 뷰 계층 구조로 직관적 |
+| **Swagger/OpenAPI로 문서화 필요** | 정적 필터링 or `@JsonView` | 필드 구성이 정적이어야 문서 반영이 용이 |
+
+---
+
+## 9‑4. 실전 예시 & 성능 메모
+
+| 시나리오 | 선택 | 이유 |
+|----------|------|------|
+| **회원 목록 API** – “아이디·닉네임만 보여줘” | `filterOutAllExcept` | 리스트라 성능 민감. 동적 필터로 필요 필드만 직렬화 ➜ 네트워크 절감 |
+| **주문 상세 API** – “관리자만 가격 원가 열람” | `@JsonView` | Public·Admin 두 뷰가 명확히 구분 |
+| **로그 저장 엔티티** – “IP 주소는 절대 노출 X” | `@JsonIgnore` | 실수 방지 가장 확실 |
+
+> **벤치마크**   
+> 일반적으로 `@JsonIgnore` → `@JsonView` → `MappingJacksonValue` 순으로 오버헤드가 증가하지만, 네트워크 전송량이 크게 줄어드는 경우 **전체 응답 시간은 오히려 빨라질 수 있으므로** **JMH · VisualVM** 등으로 실제 프로파일링을 권장합니다.
+
+---
+
+**요약**  
+정적 필터링과 동적 필터링을 적절히 조합하면, “필요할 땐 가볍고, 복잡해질 땐 유연하게” ― API 응답을 **안전하면서도 확장 가능**하게 설계할 수 있습니다.
