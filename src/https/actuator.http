@@ -1,0 +1,5 @@
+### Http Request Actuator
+GET http://localhost:8080/actuator
+
+### Http Request Actuator Health
+GET http://localhost:8080/actuator/health
